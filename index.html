@@ -329,6 +329,30 @@
       scroll-margin-top: 80px;
     }
 
+    .waitlist-form {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: nowrap;
+      flex: 1;
+    }
+
+    .waitlist-input {
+      flex: 1;
+      min-width: 0;
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      padding: 8px 12px;
+      font-size: 13px;
+      background: var(--card-soft);
+      color: var(--text);
+      outline: none;
+    }
+
+    .waitlist-input::placeholder {
+      color: var(--muted);
+    }
+
     /* HERO NOTE */
     .hero-note {
       font-size: 12px;
@@ -549,6 +573,14 @@
       .status-grid {
         grid-template-columns: minmax(0, 1fr);
       }
+      .waitlist-form {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .waitlist-input {
+        width: 100%;
+      }
     }
 
     @media (max-width: 480px) {
@@ -627,12 +659,22 @@
           </p>
 
           <div class="hero-actions" id="waitlist-block">
-            <a
-              class="btn-primary"
-              href="mailto:hello@cairolith.com?subject=Cairolith%20waitlist"
+            <form
+              id="waitlist-form"
+              class="waitlist-form"
             >
-              Join waitlist
-            </a>
+              <input
+                type="email"
+                name="email"
+                id="waitlist-email"
+                class="waitlist-input"
+                placeholder="Email"
+                required
+              />
+              <button class="btn-primary" type="submit">
+                Join waitlist
+              </button>
+            </form>
 
             <a
               class="btn-secondary"
@@ -642,7 +684,7 @@
             </a>
           </div>
 
-          <p class="hero-note">
+          <p class="hero-note" id="waitlist-status">
             <span class="status-dot"></span>
             <span>Now: architecture &amp; research.</span>
           </p>
@@ -839,6 +881,65 @@
           waitlistBlock.scrollIntoView({ behavior: "smooth", block: "center" });
         });
       }
+    })();
+
+    /* WAITLIST FORM HANDLER */
+    (function () {
+      const form = document.getElementById("waitlist-form");
+      const emailInput = document.getElementById("waitlist-email");
+      const statusEl = document.getElementById("waitlist-status");
+
+      if (!form || !emailInput) return;
+
+      const FORMSPREE_ENDPOINT = "https://formspree.io/f/xgvqeyad";
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const email = emailInput.value.trim();
+        if (!email) return;
+
+        const btn = form.querySelector("button.btn-primary");
+        const originalText = btn ? btn.textContent : "Join waitlist";
+        if (btn) {
+          btn.textContent = "Submitting…";
+          btn.disabled = true;
+        }
+
+        try {
+          const res = await fetch(FORMSPREE_ENDPOINT, {
+            method: "POST",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email }),
+          });
+
+          if (res.ok) {
+            emailInput.value = "";
+            if (statusEl) {
+              statusEl.innerHTML =
+                '<span class="status-dot"></span><span>You’re in. Thanks.</span>';
+            }
+          } else {
+            if (statusEl) {
+              statusEl.innerHTML =
+                '<span class="status-dot"></span><span>Something went wrong. Please try again.</span>';
+            }
+          }
+        } catch (err) {
+          if (statusEl) {
+            statusEl.innerHTML =
+              '<span class="status-dot"></span><span>Network error. Please try again.</span>';
+          }
+        } finally {
+          if (btn) {
+            btn.textContent = originalText;
+            btn.disabled = false;
+          }
+        }
+      });
     })();
   </script>
 </body>
