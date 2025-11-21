@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cairolith Protocol – StarkNet Infrastructure</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta
+    name="description"
+    content="Cairolith builds StarkNet infrastructure primitives around validation, staking, data and privacy with Bitcoin in view."
+  />
+
+  <style>
+    :root {
+      /* Light theme defaults */
+      --bg: #f5f5f7;
+      --card: #ffffff;
+      --card-soft: #f9fafb;
+      --border: #e1e3e8;
+      --border-soft: #ebecef;
+      --text: #111827;
+      --muted: #6b7280;
+      --accent: #007aff; /* iOS blue */
+      --status-green: #16a34a;
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --shadow-soft: 0 14px 40px rgba(15, 23, 42, 0.08);
+    }
+
+    [data-theme="dark"] {
+      --bg: #050509;
+      --card: #111218;
+      --card-soft: #151722;
+      --border: #1f2430;
+      --border-soft: #191d28;
+      --text: #f9fafb;
+      --muted: #8189a3;
+      --accent: #f7931a; /* Bitcoin orange */
+      --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.7);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Inter", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      transition: background 0.25s ease, color 0.25s ease;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .page {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 18px 24px 40px;
+    }
+
+    /* Sticky join waitlist bar */
+    .sticky-cta {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 40;
+      transform: translateY(-100%);
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .sticky-cta-inner {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 6px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 11px;
+    }
+
+    .sticky-cta-bg {
+      background: rgba(5, 5, 9, 0.94);
+      color: #f9fafb;
+      border-bottom: 1px solid rgba(31, 36, 48, 0.9);
+    }
+
+    [data-theme="light"] .sticky-cta-bg {
+      background: rgba(245, 245, 247, 0.96);
+      color: #111827;
+      border-bottom: 1px solid rgba(225, 227, 232, 0.9);
+    }
+
+    .sticky-label {
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-size: 10px;
+      opacity: 0.8;
+    }
+
+    .sticky-cta--visible {
+      transform: translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .sticky-btn {
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 11px;
+      font-weight: 500;
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Header */
+    header {
+      margin-bottom: 26px;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-mark {
+      font-size: 26px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1;
+      color: var(--accent);
+    }
+
+    .brand-wordmark {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .ticker {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .ticker-item {
+      display: flex;
+      gap: 4px;
+      align-items: baseline;
+      background: var(--card);
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      padding: 3px 8px;
+    }
+
+    .ticker-symbol {
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 10px;
+    }
+
+    .ticker-price {
+      font-size: 12px;
+      color: var(--text);
+    }
+
+    .theme-toggle {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      background: var(--card);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+    }
+
+    .theme-toggle:active {
+      transform: scale(0.96);
+    }
+
+    main {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* HERO */
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2.3fr);
+      gap: 22px;
+      align-items: flex-start;
+    }
+
+    .hero-main {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-soft);
+      padding: 22px 20px 20px;
+      box-shadow: var(--shadow-soft);
+      /* accent strip on top */
+      border-top-width: 2px;
+      border-top-color: var(--accent);
+    }
+
+    .hero-kicker {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--muted);
+      margin-bottom: 10px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .hero-title {
+      font-size: 26px;
+      line-height: 1.2;
+      letter-spacing: -0.03em;
+      margin-bottom: 10px;
+      max-width: 460px;
+    }
+
+    .hero-title span {
+      color: var(--accent);
+    }
+
+    .hero-sub {
+      font-size: 14px;
+      color: var(--muted);
+      max-width: 480px;
+      margin-bottom: 16px;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+
+    .btn-primary {
+      border-radius: 999px;
+      padding: 9px 18px;
+      font-size: 13px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: box-shadow 0.18s ease, transform 0.12s ease, opacity 0.12s ease;
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-size: 13px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      text-align: center;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      transition: background 0.18s ease, border-color 0.18s ease;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(0, 0, 0, 0.02);
+      border-color: var(--border-soft);
+    }
+
+    [data-theme="dark"] .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    /* WAITLIST BLOCK */
+    #waitlist-block {
+      scroll-margin-top: 80px;
+    }
+
+    /* HERO NOTE */
+    .hero-note {
+      font-size: 12px;
+      color: var(--muted);
+      border-top: 1px solid var(--border-soft);
+      padding-top: 8px;
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--status-green);
+      box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.18);
+      flex-shrink: 0;
+    }
+
+    /* HERO SIDE */
+    .hero-side {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .side-card {
+      background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.02), transparent 55%),
+        var(--card);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-soft);
+      padding: 14px 13px 12px;
+      font-size: 13px;
+    }
+
+    .side-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .side-title {
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .side-body {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* Sections */
+    .section {
+      padding-top: 14px;
+      border-top: 1px solid var(--border-soft);
+    }
+
+    .section-header {
+      margin-bottom: 10px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .section-title {
+      font-size: 17px;
+      letter-spacing: -0.01em;
+      margin-bottom: 6px;
+    }
+
+    .section-sub {
+      font-size: 13px;
+      color: var(--muted);
+      max-width: 520px;
+    }
+
+    .primitives-list {
+      margin-top: 10px;
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      font-size: 13px;
+    }
+
+    .primitive-item {
+      background: var(--card);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-soft);
+      padding: 12px 11px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .primitive-title {
+      font-weight: 500;
+      margin-bottom: 4px;
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    .primitive-text {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .status-grid {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      font-size: 12px;
+    }
+
+    .status-card {
+      background: var(--card);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-soft);
+      padding: 11px 11px 10px;
+    }
+
+    .status-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .status-main {
+      font-size: 13px;
+      margin-bottom: 4px;
+      color: var(--text);
+    }
+
+    .status-note {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    footer {
+      margin-top: 20px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-soft);
+      font-size: 11px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .footer-links a {
+      text-decoration: none;
+      color: var(--muted);
+      transition: color 0.15s ease, text-decoration-color 0.15s ease;
+    }
+
+    .footer-links a:hover {
+      text-decoration: underline;
+      text-decoration-color: var(--accent);
+      color: var(--text);
+    }
+
+    /* Responsive tweaks */
+    @media (max-width: 1024px) {
+      .page {
+        padding-inline: 20px;
+      }
+      .primitives-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .status-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 800px) {
+      .hero {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .hero-main {
+        order: 1;
+      }
+      .hero-side {
+        order: 2;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        padding-inline: 16px;
+      }
+      .hero-actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .primitives-list {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .status-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .brand-mark {
+        font-size: 24px;
+      }
+      .brand-wordmark {
+        font-size: 13px;
+        letter-spacing: 0.10em;
+      }
+      .ticker-item {
+        padding: 2px 6px;
+      }
+      .ticker-price {
+        font-size: 11px;
+      }
+    }
+  </style>
+</head>
+
+<body data-theme="dark">
+  <!-- Sticky join bar -->
+  <div class="sticky-cta sticky-cta-bg" id="sticky-cta">
+    <div class="sticky-cta-inner">
+      <span class="sticky-label">Cairolith waitlist</span>
+      <button type="button" class="sticky-btn" id="sticky-join">
+        Join waitlist
+      </button>
+    </div>
+  </div>
+
+  <div class="page">
+    <header>
+      <div class="header-row">
+        <!-- BRAND -->
+        <div class="brand">
+          <div class="brand-mark">[ ]</div>
+          <span class="brand-wordmark">Cairolith</span>
+        </div>
+
+        <div class="header-right">
+          <div class="ticker">
+            <div class="ticker-item">
+              <span class="ticker-symbol">STRK</span>
+              <span class="ticker-price" id="strk-price">—</span>
+            </div>
+            <div class="ticker-item">
+              <span class="ticker-symbol">BTC</span>
+              <span class="ticker-price" id="btc-price">—</span>
+            </div>
+          </div>
+
+          <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+            <span class="theme-toggle-icon">◑</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <!-- HERO -->
+      <section class="hero">
+        <div class="hero-main">
+          <div class="hero-kicker">Validation · Staking · Data · Privacy</div>
+
+          <h1 class="hero-title">
+            Infrastructure for the next<br />
+            generation of StarkNet<br />
+            <span>applications and capital.</span>
+          </h1>
+
+          <p class="hero-sub">
+            Cairolith builds StarkNet-native infrastructure primitives around
+            validation, staking and data, with Bitcoin and privacy as first-class
+            constraints rather than afterthoughts.
+          </p>
+
+          <div class="hero-actions" id="waitlist-block">
+            <a
+              class="btn-primary"
+              href="mailto:hello@cairolith.com?subject=Cairolith%20waitlist"
+            >
+              Join waitlist
+            </a>
+
+            <a
+              class="btn-secondary"
+              href="mailto:hello@cairolith.com?subject=Contact"
+            >
+              Contact
+            </a>
+          </div>
+
+          <p class="hero-note">
+            <span class="status-dot"></span>
+            <span>Now: architecture &amp; research.</span>
+          </p>
+        </div>
+
+        <aside class="hero-side">
+          <div class="side-card">
+            <div class="side-label">Focus</div>
+            <div class="side-title">One network, deep surface</div>
+            <p class="side-body">
+              StarkNet-first, with a narrow mandate: secure validation, aligned
+              staking, and signals that matter to serious users and capital.
+            </p>
+          </div>
+          <div class="side-card">
+            <div class="side-label">Who this is for</div>
+            <div class="side-title">Builders, operators, funds</div>
+            <p class="side-body">
+              Teams who care about uptime, decentralisation, privacy constraints
+              and the way StarkNet relates to Bitcoin over time.
+            </p>
+          </div>
+        </aside>
+      </section>
+
+      <!-- PRIMITIVES -->
+      <section class="section">
+        <div class="section-header">
+          <div class="section-label">Primitives</div>
+          <h2 class="section-title">What Cairolith is designed to ship.</h2>
+          <p class="section-sub">
+            A set of primitives, each built to be composable, observable and fit
+            for long-term use on StarkNet.
+          </p>
+        </div>
+
+        <ul class="primitives-list">
+          <li class="primitive-item">
+            <div class="primitive-title">Validation</div>
+            <div class="primitive-text">
+              StarkNet validator operations with conservative upgrade policies,
+              clear incentives and public performance data.
+            </div>
+          </li>
+          <li class="primitive-item">
+            <div class="primitive-title">Staking</div>
+            <div class="primitive-text">
+              STRK staking primitives that respect decentralisation and liquidity,
+              and price in how capital moves relative to Bitcoin.
+            </div>
+          </li>
+          <li class="primitive-item">
+            <div class="primitive-title">Data &amp; privacy</div>
+            <div class="primitive-text">
+              Focused views on validator health, staking flows and usage, with
+              attention to privacy-aware patterns instead of raw exhaust.
+            </div>
+          </li>
+        </ul>
+      </section>
+
+      <!-- STATUS -->
+      <section class="section">
+        <div class="section-header">
+          <div class="section-label">Status</div>
+          <h2 class="section-title">Current phase.</h2>
+          <p class="section-sub">
+            High-level view of where the work is today and what is being pushed
+            forward next.
+          </p>
+        </div>
+
+        <div class="status-grid">
+          <div class="status-card">
+            <div class="status-label">Now</div>
+            <div class="status-main">Architecture &amp; research</div>
+            <div class="status-note">
+              Refining validator architecture, capital flows, and how StarkNet,
+              Bitcoin and privacy constraints intersect.
+            </div>
+          </div>
+          <div class="status-card">
+            <div class="status-label">Next</div>
+            <div class="status-main">Test infrastructure</div>
+            <div class="status-note">
+              Running test setups for validation, monitoring and internal
+              dashboards around STRK, BTC and privacy-aware flows.
+            </div>
+          </div>
+          <div class="status-card">
+            <div class="status-label">Later</div>
+            <div class="status-main">Public release</div>
+            <div class="status-note">
+              Bringing a validator online, opening staking flows and publishing
+              data interfaces as they harden.
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div>© <span id="year"></span> Cairolith Protocol.</div>
+      <div class="footer-links">
+        <a href="mailto:hello@cairolith.com">Email</a>
+        <span>·</span>
+        <a href="https://x.com/cairolith" target="_blank" rel="noopener noreferrer">X</a>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    /* THEME HANDLER */
+    (function () {
+      const body = document.body;
+      const toggle = document.getElementById("theme-toggle");
+
+      const saved = localStorage.getItem("cairolith-theme");
+      if (saved === "light" || saved === "dark") {
+        body.dataset.theme = saved;
+      } else {
+        body.dataset.theme = "dark";
+      }
+
+      if (toggle) {
+        toggle.addEventListener("click", () => {
+          const next = body.dataset.theme === "dark" ? "light" : "dark";
+          body.dataset.theme = next;
+          localStorage.setItem("cairolith-theme", next);
+        });
+      }
+    })();
+
+    /* YEAR */
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    /* TICKER */
+    async function loadPrices() {
+      try {
+        const res = await fetch(
+          "https://api.coingecko.com/api/v3/simple/price?ids=starknet,bitcoin&vs_currencies=usd"
+        );
+        if (!res.ok) return;
+        const json = await res.json();
+
+        const strk = json?.starknet?.usd;
+        const btc = json?.bitcoin?.usd;
+
+        if (strk != null) {
+          document.getElementById("strk-price").textContent =
+            "$" +
+            Number(strk).toLocaleString(undefined, {
+              minimumFractionDigits: 3,
+              maximumFractionDigits: 3,
+            });
+        }
+
+        if (btc != null) {
+          document.getElementById("btc-price").textContent =
+            "$" +
+            Number(btc).toLocaleString(undefined, {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            });
+        }
+      } catch (err) {
+        console.error("Price load failed", err);
+      }
+    }
+    loadPrices();
+
+    /* Sticky join waitlist */
+    (function () {
+      const sticky = document.getElementById("sticky-cta");
+      const joinBtn = document.getElementById("sticky-join");
+      const waitlistBlock = document.getElementById("waitlist-block");
+
+      if (!sticky || !waitlistBlock) return;
+
+      function onScroll() {
+        const rect = waitlistBlock.getBoundingClientRect();
+        const passed = rect.bottom < 0;
+        if (passed) {
+          sticky.classList.add("sticky-cta--visible");
+        } else {
+          sticky.classList.remove("sticky-cta--visible");
+        }
+      }
+
+      window.addEventListener("scroll", onScroll, { passive: true });
+
+      if (joinBtn) {
+        joinBtn.addEventListener("click", () => {
+          waitlistBlock.scrollIntoView({ behavior: "smooth", block: "center" });
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
